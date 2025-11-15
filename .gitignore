@@ -3,6 +3,7 @@
 *.dmp
 *.sql
 *.zip
+*.db
 /.settings
 /.installed.cfg
 /.idea/*
