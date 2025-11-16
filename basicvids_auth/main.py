@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from routers.root import router as root_router
-from routers.users import router as users_router
+from basicvids_auth.routers.root import router as root_router
+from basicvids_auth.routers.users import router as users_router
 
 app = FastAPI()
 
