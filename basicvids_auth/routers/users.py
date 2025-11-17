@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, Query
+from fastapi import FastAPI, APIRouter, Depends, Query, HTTPException
 
 from sqlmodel import Session, select
 
@@ -35,8 +35,19 @@ async def users(
 @router.post("/create/", response_model=PublicUser, status_code=201)
 def create_user(user: UserCreate, session: Session = Depends(get_session)) -> PublicUser:
 
-    # hash the password
+    # Check duplicates
+    query = select(UserDB)
+    for field, value in user.model_dump(exclude={'password'}).items():
+        if hasattr(UserDB, field):
+            query = query.where(getattr(UserDB, field) == value)
+
+    existing_user = session.exec(query).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail='User already exists')
+
     user_data = user.model_dump()
+
+    # hash the password
     user_data["password"] = hash_password(user.password)
 
     db_user = UserDB(**user_data)

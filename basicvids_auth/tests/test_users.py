@@ -70,6 +70,55 @@ class TestUsersList(BaseTestUsers):
         response_data = response.json()
         assert len(response_data) != 0
 
+    def test_users_list_pagination(self):
+        params = {
+            "offset": 0,
+            "limit": 1
+        }
+        response = client.get(self.method_url, params=params)
+        assert response.status_code == 200
+
+        response_data = response.json()
+
+        assert len(response_data) == 1
+
+    def test_users_list_pagination_empty(self):
+
+        params = {
+            "offset": 1,
+            "limit": 1
+        }
+        response = client.get(self.method_url, params=params)
+        assert response.status_code == 200
+
+        response_data = response.json()
+        assert len(response_data) == 0
+
+    def test_users_list_filter(self):
+        params = {
+            "username": self.payload['username']
+        }
+
+        response = client.get(self.method_url, params=params)
+        assert response.status_code == 200
+
+        response_data = response.json()
+
+        assert len(response_data) == 1
+
+    def test_users_list_filter_empty(self):
+        params = {
+            # wrong username
+            "username": "abracadabra"
+        }
+
+        response = client.get(self.method_url, params=params)
+        assert response.status_code == 200
+
+        response_data = response.json()
+
+        assert len(response_data) == 0
+
 
 class TestUsersCreate(BaseTestUsers):
     
@@ -98,3 +147,13 @@ class TestUsersCreate(BaseTestUsers):
         
         response = client.post(self.method_url, json=self.payload)
         assert response.status_code == 422
+
+    def test_create_user_duplicate(self):
+
+        response = client.post(self.method_url, json=self.payload)
+        assert response.status_code == 201
+
+        # try to create duplicate
+        response = client.post(self.method_url, json=self.payload)
+        
+        assert response.status_code == 400
