@@ -1,8 +1,11 @@
 from fastapi.testclient import TestClient
+
 from sqlmodel import SQLModel, Session, create_engine, select, delete
+
 from basicvids_auth.main import app
-from basicvids_auth.schemas import get_session, User as UserDB 
-from basicvids_auth.models import PublicUser
+from basicvids_auth.schemas import get_session
+from basicvids_auth.schemas.users import User as UserDB 
+from basicvids_auth.models import PublicUser, FilterUser
 
 from abc import ABC
 
@@ -130,10 +133,8 @@ class TestUsersCreate(BaseTestUsers):
         response_data = response.json()
         assert response.status_code == 201
 
-        # Check response data
-        public_user = PublicUser(**self.payload)
-
-        for key, value in public_user.model_dump().items():
+        self.payload.pop('password')
+        for key, value in self.payload.items():
             assert value == response_data[key]
 
         with Session(engine) as session:
@@ -157,3 +158,57 @@ class TestUsersCreate(BaseTestUsers):
         response = client.post(self.method_url, json=self.payload)
         
         assert response.status_code == 400
+
+
+class TestUserDelete(BaseTestUsers):
+    method_url = None
+
+    def setup_method(self):
+        super().setup_method()
+
+        test_user = UserDB(**self.payload)
+
+        with Session(engine) as session:
+            session.add(test_user)
+            session.commit()
+            session.refresh(test_user)
+
+        self.method_url = f"/api/v1/users/{test_user.id}"
+
+    def test_delete_user(self):
+
+        response = client.delete(self.method_url)
+
+        assert response.status_code == 200
+
+    def test_delete_user_404(self):
+
+        response = client.delete("/api/v1/users/999")
+
+        assert response.status_code == 404
+
+
+class TestUserDetail(BaseTestUsers):
+    method_url = "/api/v1/users/1"
+
+    def setup_method(self):
+        super().setup_method()
+
+        test_user = UserDB(**self.payload)
+
+        with Session(engine) as session:
+            session.add(test_user)
+            session.commit()
+            session.refresh(test_user)
+
+    def test_detail_user(self):
+
+        response = client.get(self.method_url)
+
+        assert response.status_code == 200
+
+        response_data = response.json()
+
+        self.payload.pop('password')
+        for key, value in self.payload.items():
+            assert value == response_data[key]

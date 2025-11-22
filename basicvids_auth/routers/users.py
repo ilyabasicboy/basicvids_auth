@@ -1,12 +1,13 @@
-from fastapi import FastAPI, APIRouter, Depends, Query, HTTPException
+from fastapi import FastAPI, APIRouter, Depends, Query, HTTPException, Path
 
 from sqlmodel import Session, select
 
 from typing import Annotated
 
 from basicvids_auth.utils.password import hash_password
-from basicvids_auth.schemas import get_session, User as UserDB
-from basicvids_auth.models import User, PublicUser, UserCreate
+from basicvids_auth.schemas import get_session
+from basicvids_auth.schemas.users import User as UserDB
+from basicvids_auth.models import User, PublicUser, UserCreate, FilterUser
 
 # Create a router for users
 router = APIRouter(tags=["Users"], prefix='/users')
@@ -14,7 +15,7 @@ router = APIRouter(tags=["Users"], prefix='/users')
 
 @router.get("/")
 async def users(
-    filter: Annotated[PublicUser, Depends(PublicUser)],
+    filter: Annotated[FilterUser, Depends(FilterUser)],
     offset:int = 0,
     limit: int = Query(default=10, le=100),
     session: Session = Depends(get_session),
@@ -32,8 +33,21 @@ async def users(
     return users
 
 
+@router.get("/{user_id}")
+async def users_detail(
+    user_id: Annotated[int, Path(title="The ID of the user to get")],
+    session: Session = Depends(get_session),
+) -> PublicUser:
+    user = session.get(UserDB, user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return user
+
+
 @router.post("/create/", response_model=PublicUser, status_code=201)
-def create_user(user: UserCreate, session: Session = Depends(get_session)) -> PublicUser:
+async def create_user(user: UserCreate, session: Session = Depends(get_session)) -> PublicUser:
 
     # Check duplicates
     query = select(UserDB)
@@ -55,3 +69,20 @@ def create_user(user: UserCreate, session: Session = Depends(get_session)) -> Pu
     session.commit()
     session.refresh(db_user)
     return db_user
+
+
+@router.delete('/{user_id}', status_code=200)
+async def delete_user(
+    user_id: Annotated[int, Path(title="The ID of the user to delete")],
+    session: Session = Depends(get_session)
+):
+    
+    user = session.get(UserDB, user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    session.delete(user)
+    session.commit()
+
+    return {"message": "User deleted successfully"}
