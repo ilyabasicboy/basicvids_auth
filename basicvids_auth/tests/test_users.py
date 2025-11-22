@@ -5,7 +5,6 @@ from sqlmodel import SQLModel, Session, create_engine, select, delete
 from basicvids_auth.main import app
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB 
-from basicvids_auth.models import PublicUser, FilterUser
 
 from abc import ABC
 
