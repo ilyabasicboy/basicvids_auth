@@ -7,7 +7,7 @@ from typing import Annotated
 from basicvids_auth.utils.password import hash_password
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
-from basicvids_auth.models import User, PublicUser, UserCreate, FilterUser
+from basicvids_auth.models.users import User, PublicUser, UserCreate, FilterUser
 
 # Create a router for users
 router = APIRouter(tags=["Users"], prefix='/users')
