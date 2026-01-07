@@ -2,4 +2,5 @@ fastapi[standard]
 sqlmodel
 psycopg2-binary
 passlib[bcrypt]
+python-jose[cryptography]
 httpx

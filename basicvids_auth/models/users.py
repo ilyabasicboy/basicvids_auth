@@ -1,12 +1,6 @@
-from typing import Union, Optional
+from typing import Optional
 
-from fastapi import FastAPI
-from pydantic import BaseModel, EmailStr, constr, model_validator
-
-from sqlmodel import select, Session
-
-from basicvids_auth.schemas import get_session
-from basicvids_auth.schemas.users import User as UserDB
+from pydantic import BaseModel, EmailStr, constr
 
 
 class User(BaseModel):
@@ -33,7 +27,7 @@ class FilterUser(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: EmailStr | None = None
-    is_admin: bool = False
+    is_admin: bool | None = None
 
 
 class UserCreate(BaseModel):
@@ -42,4 +36,5 @@ class UserCreate(BaseModel):
     last_name: str | None = None
     email: EmailStr
     password: constr(max_length=72)
+    is_admin: bool = False
     

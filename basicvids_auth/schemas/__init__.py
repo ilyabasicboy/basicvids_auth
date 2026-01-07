@@ -1,4 +1,6 @@
 from sqlmodel import Session, SQLModel, create_engine
+from basicvids_auth.schemas.auth import *
+from basicvids_auth.schemas.users import *
 
 
 DATABASE_URL = "sqlite:///database.db"
@@ -17,6 +19,4 @@ def get_session():
         finally:
             session.close()
 
-
-if __name__ == "__main__":
-    create_db_and_tables()
+create_db_and_tables()
