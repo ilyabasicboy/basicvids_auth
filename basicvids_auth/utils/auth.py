@@ -6,12 +6,7 @@ from basicvids_auth.utils.other import is_email
 from basicvids_auth.utils.password import verify_password
 from basicvids_auth.schemas.users import User as UserDB
 from basicvids_auth.schemas.auth import RefreshToken
-
-
-SECRET_KEY = "CHANGE_ME_SUPER_SECRET"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+from basicvids_auth.settings import settings
 
 
 def create_token(data: dict, expires_delta: timedelta):
@@ -24,27 +19,26 @@ def create_token(data: dict, expires_delta: timedelta):
             "iat": now
         }
     )
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
 def create_access_token(user_id: str):
     return create_token(
         {"sub": str(user_id), "type": "access"},
-        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
 
 def create_refresh_token(user_id: str, token_id: str):
     return create_token(
         {"sub": str(user_id), "jti": str(token_id), "type": "refresh"},
-        timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
 
 def decode_token(token: str):
-    print(type(token))
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError as e:
         print(e)
         return None
@@ -65,7 +59,7 @@ def authenticate(session: Session, identifier: str, password: str):
         return
     
     iat = datetime.now(timezone.utc)
-    exp = iat + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    exp = iat + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     refresh_token = RefreshToken(
         user_id=user.id,

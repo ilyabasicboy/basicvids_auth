@@ -4,6 +4,7 @@
 *.sql
 *.zip
 *.db
+*.env
 /.settings
 /.installed.cfg
 /.idea/*

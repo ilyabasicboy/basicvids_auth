@@ -7,7 +7,7 @@ from typing import Annotated
 from basicvids_auth.utils.password import hash_password
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
-from basicvids_auth.models.users import User, PublicUser, UserCreate, FilterUser
+from basicvids_auth.models.users import User, PublicUser, UserCreate, FilterUser, AdminCreate
 from basicvids_auth.decorators.auth import authenticated, admin_authenticated
 
 # Create a router for users
@@ -65,6 +65,36 @@ async def users_detail_by_id(
 
 @router.post("/create/", response_model=PublicUser, status_code=201)
 async def create_user(user: UserCreate, session: Session = Depends(get_session)) -> PublicUser:
+
+    # Check duplicates
+    query = select(UserDB)
+    for field, value in user.model_dump(exclude={'password'}).items():
+        if hasattr(UserDB, field):
+            query = query.where(getattr(UserDB, field) == value)
+
+    existing_user = session.exec(query).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail='User already exists')
+
+    user_data = user.model_dump()
+
+    # hash the password
+    user_data["password"] = hash_password(user.password)
+
+    db_user = UserDB(**user_data)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user
+
+
+@router.post("/create/admin/", response_model=PublicUser, status_code=201)
+@admin_authenticated
+async def create_admin(
+    request: Request,
+    user: AdminCreate,
+    session: Session = Depends(get_session)
+) -> PublicUser:
 
     # Check duplicates
     query = select(UserDB)

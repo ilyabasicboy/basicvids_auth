@@ -36,5 +36,12 @@ class UserCreate(BaseModel):
     last_name: str | None = None
     email: EmailStr
     password: constr(max_length=72)
-    is_admin: bool = False
     
+
+class AdminCreate(BaseModel):
+    username: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: EmailStr
+    password: constr(max_length=72)
+    is_admin: bool = True
