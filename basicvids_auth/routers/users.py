@@ -56,7 +56,6 @@ async def users_detail_by_id(
     session: Session = Depends(get_session),
 ) -> PublicUser:
     user = session.get(UserDB, user_id)
-
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     

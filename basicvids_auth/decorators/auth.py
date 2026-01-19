@@ -1,12 +1,13 @@
 from functools import wraps
 from fastapi import Request, HTTPException, status
+from sqlmodel import Session
 
 from basicvids_auth.utils.auth import decode_token
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
 
 
-def authenticate(request: Request):
+def authenticate(request: Request, session: Session):
     auth_header = request.headers.get("Authorization")
 
     if not auth_header:
@@ -39,8 +40,6 @@ def authenticate(request: Request):
             detail="Only access tokens are allowed",
         )
     
-    session = next(get_session())
-
     user_id = payload.get("sub")
     user = session.get(UserDB, user_id)
     if not user:
@@ -65,8 +64,19 @@ def authenticated(view):
 
         if request is None:
             raise RuntimeError("Request not found")
+        
+        # find Session
+        session: Session | None = kwargs.get("session")
+        if not session:
+            for arg in args:
+                if isinstance(arg, Session):
+                    session = arg
+                    break
 
-        user = authenticate(request)
+        if session is None:
+            raise RuntimeError("Session not found")
+
+        user = authenticate(request, session)
 
         # save user
         request.state.user = user
@@ -90,8 +100,19 @@ def admin_authenticated(view):
 
         if request is None:
             raise RuntimeError("Request not found")
+        
+        # find Session
+        session: Session | None = kwargs.get("session")
+        if not session:
+            for arg in args:
+                if isinstance(arg, Session):
+                    session = arg
+                    break
 
-        user = authenticate(request)
+        if session is None:
+            raise RuntimeError("Session not found")
+
+        user = authenticate(request, session)
 
         if not user.is_admin:
             raise HTTPException(
