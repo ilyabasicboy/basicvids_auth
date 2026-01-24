@@ -39,6 +39,7 @@ async def users(
 @authenticated
 async def users_detail(
     request: Request,
+    session: Session = Depends(get_session),
 ) -> PublicUser:
     user = request.state.user
 

@@ -139,7 +139,7 @@ class TestUsersList(BaseTestUsers):
 
     def test_users_list_no_permissions(self):
         test_token = create_access_token(self.test_user.id)
-        test_headers = self.headers = {
+        test_headers = {
             'Authorization': 'Bearer {}'.format(test_token)
         }
         response = client.get(self.method_url, headers=test_headers)
@@ -199,7 +199,37 @@ class TestUserDelete(BaseTestUsers):
             session.commit()
             session.refresh(test_user)
 
-        self.method_url = f"/api/v1/users/delete/{test_user.id}"
+    def test_delete_user(self):
+        response = client.delete(
+            self.method_url,
+            headers=self.headers
+        )
+
+        assert response.status_code == 200
+
+    def test_delete_user_unauthorized(self):
+        response = client.delete(
+            self.method_url,
+            headers={}
+        )
+
+        assert response.status_code == 401
+
+
+class TestUserDeleteById(BaseTestUsers):
+    method_url = "/api/v1/users/delete"
+
+    def setup_method(self):
+        super().setup_method()
+
+        self.test_user = UserDB(**self.payload)
+
+        with Session(engine) as session:
+            session.add(self.test_user)
+            session.commit()
+            session.refresh(self.test_user)
+
+        self.method_url = f"/api/v1/users/delete/{self.test_user.id}"
 
     def test_delete_user(self):
         response = client.delete(
@@ -209,11 +239,21 @@ class TestUserDelete(BaseTestUsers):
 
         assert response.status_code == 200
 
-    # def test_delete_user_404(self):
+    def test_delete_user_unauthorized(self):
+        response = client.delete(
+            self.method_url,
+            headers={}
+        )
 
-    #     response = client.delete("/api/v1/users/999")
+        assert response.status_code == 401
 
-    #     assert response.status_code == 404
+    def test_delete_user_no_permissions(self):
+        test_token = create_access_token(self.test_user.id)
+        test_headers = {
+            'Authorization': 'Bearer {}'.format(test_token)
+        }
+        response = client.delete(self.method_url, headers=test_headers)
+        assert response.status_code == 403
 
 
 class TestUserDetail(BaseTestUsers):
@@ -229,9 +269,14 @@ class TestUserDetail(BaseTestUsers):
             session.commit()
             session.refresh(test_user)
 
-        self.method_url = f"/api/v1/users/detail/{test_user.id}"
+        token = create_access_token(test_user.id)
+        self.headers = {
+            'Authorization': 'Bearer {}'.format(token)
+        }
 
-    def test_detail_user(self):
+        self.method_url = f"/api/v1/users/detail/"
+
+    def test_detail_user_success(self):
         response = client.get(
             self.method_url,
             headers=self.headers
@@ -243,3 +288,57 @@ class TestUserDetail(BaseTestUsers):
         self.payload.pop('password')
         for key, value in self.payload.items():
             assert value == response_data[key]
+
+    def test_detail_user_not_authorized(self):
+        response = client.get(
+            self.method_url,
+            headers={}
+        )
+        assert response.status_code == 401
+
+
+class TestUserDetailById(BaseTestUsers):
+    method_url = None
+
+    def setup_method(self):
+        super().setup_method()
+
+        self.test_user = UserDB(**self.payload)
+
+        with Session(engine) as session:
+            session.add(self.test_user)
+            session.commit()
+            session.refresh(self.test_user)
+
+        self.method_url = f"/api/v1/users/detail/{self.test_user.id}"
+
+    def test_detail_user_success(self):
+        response = client.get(
+            self.method_url,
+            headers=self.headers
+        )
+        assert response.status_code == 200
+
+        response_data = response.json()
+
+        self.payload.pop('password')
+        for key, value in self.payload.items():
+            assert value == response_data[key]
+
+    def test_detail_user_not_authorized(self):
+        response = client.get(
+            self.method_url,
+            headers={}
+        )
+        assert response.status_code == 401
+
+    def test_detail_user_no_permissions(self):
+        token = create_access_token(self.test_user.id)
+        headers = {
+            'Authorization':'Bearer {}'.format(token)
+        }
+        response = client.get(
+            self.method_url,
+            headers=headers
+        )
+        assert response.status_code == 403

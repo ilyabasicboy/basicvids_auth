@@ -19,7 +19,7 @@ async def login(login: LoginRequest, session: Session = Depends(get_session)) ->
 
     if not auth_data:
         raise HTTPException(status_code=401, detail='User is not authenticated')
-    
+
     return auth_data
 
 
