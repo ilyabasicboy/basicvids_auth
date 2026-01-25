@@ -3,6 +3,7 @@ from sqlmodel import Session, select, delete
 from basicvids_auth.schemas.users import User as UserDB 
 from basicvids_auth.tests import engine, client
 from basicvids_auth.utils.auth import create_access_token
+from basicvids_auth.models.users import PublicUser
 
 from abc import ABC
 
@@ -71,6 +72,9 @@ class TestUsersList(BaseTestUsers):
 
         response_data = response.json()
         assert len(response_data) != 0
+
+        user_data = response_data[0]
+        assert PublicUser(**user_data)
 
     def test_users_list_pagination(self):
         params = {
