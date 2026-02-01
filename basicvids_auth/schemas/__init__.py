@@ -1,9 +1,10 @@
 from sqlmodel import Session, SQLModel, create_engine
 from basicvids_auth.schemas.auth import *
 from basicvids_auth.schemas.users import *
+from basicvids_auth.settings import settings
 
 
-DATABASE_URL = "sqlite:///database.db"
+DATABASE_URL = settings.DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 

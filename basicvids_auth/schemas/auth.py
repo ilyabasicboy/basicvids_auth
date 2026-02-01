@@ -12,7 +12,7 @@ class RefreshToken(SQLModel, table=True):
         primary_key=True,
         index=True,
     )
-    user_id: str = Field(
+    user_id: int = Field(
         foreign_key="user.id",
         index=True,
         nullable=False,
