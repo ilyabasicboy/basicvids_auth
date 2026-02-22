@@ -2,6 +2,8 @@ fastapi[standard]
 pydantic-settings
 sqlmodel
 psycopg2-binary
-passlib[bcrypt]
 python-jose[cryptography]
 httpx
+
+bcrypt==4.0.1
+passlib==1.7.4
