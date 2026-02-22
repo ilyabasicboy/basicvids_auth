@@ -3,7 +3,8 @@ version: "3.9"
 services:
   web:
     build: .
-    container_name: fastapi_demo
+    container_name: basicvids_auth
     ports:
       - "8000:8000"
+
     restart: unless-stopped

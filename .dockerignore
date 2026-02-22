@@ -3,3 +3,13 @@ __pycache__
 .git
 .env
 .db
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml

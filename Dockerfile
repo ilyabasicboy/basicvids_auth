@@ -13,14 +13,16 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
+COPY start.sh .
+RUN chmod +x start.sh
 
-# Expose port
+# Expose port 
 EXPOSE 8000
 
 # Run server
-CMD ["fastapi", "dev", "basicvids_auth/main.py", "-p", "8000"]
+CMD ["./start.sh"]
