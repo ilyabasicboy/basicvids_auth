@@ -1,10 +1,22 @@
-version: "3.9"
-
 services:
-  web:
-    build: .
+  basicvids_auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: basicvids_auth
     ports:
       - "8000:8000"
-
-    restart: unless-stopped
+    volumes:
+      - .:/basicvids_auth
+    environment:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+      SECRET_KEY: "${SECRET_KEY:-}"
+    command: |
+      bash -c '
+      if [ -z "$SECRET_KEY" ]; then
+          export SECRET_KEY=$(openssl rand -hex 32)
+          echo "Generated SECRET_KEY=$SECRET_KEY"
+      fi
+      uvicorn basicvids_auth.main:app --host 0.0.0.0 --port 8000 --reload
+      '
