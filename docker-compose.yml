@@ -6,17 +6,11 @@ services:
     container_name: basicvids_auth
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - .:/basicvids_auth
+      - ./data:/basicvids_auth/data
     environment:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
-      SECRET_KEY: "${SECRET_KEY:-}"
-    command: |
-      bash -c '
-      if [ -z "$SECRET_KEY" ]; then
-          export SECRET_KEY=$(openssl rand -hex 32)
-          echo "Generated SECRET_KEY=$SECRET_KEY"
-      fi
-      uvicorn basicvids_auth.main:app --host 0.0.0.0 --port 8000 --reload
-      '
+    entrypoint: ["/basicvids_auth/entrypoint.sh"]

@@ -7,13 +7,15 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    DATABASE_URL: str = "sqlite:///database.db"
+    DATABASE_URL: str = "sqlite:///./data/database.db"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="./data/.env",
         env_file_encoding="utf-8",
         case_sensitive=True,
     )
 
-
-settings = Settings()
+try:
+    settings = Settings()
+except Exception as e:
+    print(e)

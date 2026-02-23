@@ -8,6 +8,8 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     build-essential \
+    less \
+    nano \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -18,11 +20,11 @@ RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
-COPY start.sh .
-RUN chmod +x start.sh
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 # Expose port 
 EXPOSE 8000
 
 # Run server
-CMD ["./start.sh"]
+CMD ["./entrypoint.sh"]

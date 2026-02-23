@@ -7,7 +7,7 @@ from basicvids_auth.schemas import get_session
 
 
 # Create test db
-TEST_DATABASE_URL = "sqlite:///./test.db"
+TEST_DATABASE_URL = "sqlite:///./data/test.db"
 
 engine = create_engine(
     TEST_DATABASE_URL, 
