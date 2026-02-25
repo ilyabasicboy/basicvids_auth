@@ -3,14 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_PORT: ${APP_PORT:-8000}
+
     container_name: basicvids_auth
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:${APP_PORT:-8000}"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${CUSTOM_HOST:-host.docker.internal}:host-gateway"
     volumes:
-      - ./data:/basicvids_auth/data
+      - ${DATA_PATH:-./data}:/basicvids_auth/data
     environment:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
+      APP_PORT: ${APP_PORT:-8000}
     entrypoint: ["/basicvids_auth/entrypoint.sh"]

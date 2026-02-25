@@ -24,7 +24,9 @@ COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Expose port 
-EXPOSE 8000
+ARG APP_PORT=8000
+ENV APP_PORT=${APP_PORT}
+EXPOSE ${APP_PORT}
 
 # Run server
 CMD ["./entrypoint.sh"]

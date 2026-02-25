@@ -3,6 +3,7 @@ set -e
 
 # path to data
 ENV_FILE=/basicvids_auth/data/.env
+PORT=${APP_PORT:-8000}
 
 # Create .env and set Secret
 if [ ! -f "$ENV_FILE" ]; then
@@ -13,4 +14,4 @@ fi
 
 export $(grep -v '^#' "$ENV_FILE" | xargs)
 
-exec uvicorn basicvids_auth.main:app --host 0.0.0.0 --port 8000 --reload
+exec uvicorn basicvids_auth.main:app --host 0.0.0.0 --port $PORT
