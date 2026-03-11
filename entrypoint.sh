@@ -14,4 +14,8 @@ fi
 
 export $(grep -v '^#' "$ENV_FILE" | xargs)
 
-exec uvicorn basicvids_auth.main:app --host 0.0.0.0 --port $PORT
+exec gunicorn basicvids_auth.main:app \
+    -k uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:$PORT \
+    --workers 4 \
+    --timeout 120

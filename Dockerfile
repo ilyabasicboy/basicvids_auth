@@ -20,13 +20,9 @@ RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
-COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Expose port 
 ARG APP_PORT=8000
 ENV APP_PORT=${APP_PORT}
 EXPOSE ${APP_PORT}
-
-# Run server
-CMD ["./entrypoint.sh"]
