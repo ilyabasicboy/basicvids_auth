@@ -2,7 +2,6 @@
 set -e
 
 ENV_FILE=/basicvids_auth/data/.env
-PORT=${APP_PORT:-8000}
 
 # Create .env and set Secret
 if [ ! -f "$ENV_FILE" ]; then
@@ -20,7 +19,7 @@ echo "Starting server with $WORKERS workers"
 
 exec gunicorn basicvids_auth.main:app \
     -k uvicorn.workers.UvicornWorker \
-    --bind 0.0.0.0:$PORT \
+    --bind 0.0.0.0:8000 \
     --workers $WORKERS \
     --timeout 120 \
     --access-logfile - \

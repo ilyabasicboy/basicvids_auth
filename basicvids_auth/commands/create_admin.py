@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from sqlmodel import select
 
 
-def create_admin(email, username, password, first_name=None, last_name=None):
+def create_admin(username, password, email, first_name=None, last_name=None):
 
     data = {
         'email': email,
@@ -59,9 +59,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Admin args")
 
-    parser.add_argument("email", type=str)
     parser.add_argument("username", type=str)
     parser.add_argument("password", type=str)
+    parser.add_argument("email", type=str)
     parser.add_argument("--first_name", type=str, required=False)
     parser.add_argument("--last_name", type=str, required=False)
 

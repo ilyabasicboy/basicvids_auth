@@ -27,9 +27,4 @@ COPY . .
 
 RUN chmod +x entrypoint.sh
 
-ARG APP_PORT=8000
-ENV APP_PORT=${APP_PORT}
-
-EXPOSE ${APP_PORT}
-
 ENTRYPOINT ["/basicvids_auth/entrypoint.sh"]
