@@ -52,16 +52,17 @@ PORT=9000 docker compose up -d
 
 ## Project Configuration
 
-Create DATA_PATH/.env file // (./data/.env by default)
+Create DATA_PATH/.env file # (./data/.env by default)
 
 Environment variables:
 
-SECRET_KEY=random secret string // for jwt encoding
-ALGORITHM=STR // (default=HS256)
-ACCESS_TOKEN_EXPIRE_MINUTES=INT // (default=15)
-REFRESH_TOKEN_EXPIRE_DAYS=INT // (default=7)
+SECRET_KEY=random secret string # for jwt encoding
+ALGORITHM=STR # (default=HS256)
+ACCESS_TOKEN_EXPIRE_MINUTES=INT # (default=15)
 
-DATABASE_URL=postgresql://basicvids_auth_user:basicvidsauthpassword@host.docker.internal:5432/basicvids_auth // (default=sqlite:///./data/database.db)
+REFRESH_TOKEN_EXPIRE_DAYS=INT # (default=7)
+
+DATABASE_URL=postgresql://basicvids_auth_user:basicvidsauthpassword@host.docker.internal:5432/basicvids_auth # (default=sqlite:///./data/database.db)
 
 ## Healthcheck
 
