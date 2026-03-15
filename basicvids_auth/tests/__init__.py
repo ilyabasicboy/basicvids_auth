@@ -1,17 +1,19 @@
 from fastapi.testclient import TestClient
 
+from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel, Session, create_engine
 
 from basicvids_auth.main import app
 from basicvids_auth.schemas import get_session
 
 
-# Create test db
-TEST_DATABASE_URL = "sqlite:///./data/test.db"
+# Create test db (in-memory)
+TEST_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
-    TEST_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 
 SQLModel.metadata.create_all(engine)

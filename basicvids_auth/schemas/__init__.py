@@ -19,5 +19,3 @@ def get_session():
             yield session
         finally:
             session.close()
-
-create_db_and_tables()
