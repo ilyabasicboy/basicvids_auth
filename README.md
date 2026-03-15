@@ -101,12 +101,6 @@ docker compose down
 docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.py username password email --first_name first_name --last_name last_name
 ```
 
-## Run Tests
-
-```bash
-docker compose exec basicvids_auth pytest
-```
-
 ## API Documentation
 
 ### Health Check
