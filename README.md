@@ -1,6 +1,6 @@
 # BasicVids Auth
 
-Universal Authentication Microservice.
+Authentication universal microservice.
 
 ## Stack
 * Nginx
