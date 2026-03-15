@@ -65,8 +65,6 @@ Environment variables:
 
 SECRET_KEY=random secret string # for jwt encoding
 
-ALGORITHM=STR # (default=HS256)
-
 ACCESS_TOKEN_EXPIRE_MINUTES=INT # (default=15)
 
 REFRESH_TOKEN_EXPIRE_DAYS=INT # (default=7)
