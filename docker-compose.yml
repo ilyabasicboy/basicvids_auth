@@ -1,8 +1,6 @@
 services:
   basicvids_auth:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ilyabasicboy/basicvids-auth:latest
 
     container_name: basicvids_auth
     extra_hosts:
