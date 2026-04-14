@@ -1,6 +1,7 @@
 from fastapi import FastAPI, APIRouter, Depends, Query, HTTPException, Path, Request
 
 from sqlmodel import Session, select
+from sqlalchemy import or_
 
 from typing import Annotated
 
@@ -12,6 +13,13 @@ from basicvids_auth.decorators.auth import authenticated, admin_authenticated
 
 # Create a router for users
 router = APIRouter(tags=["Users"], prefix='/users')
+
+
+def get_existing_user(session: Session, username: str, email: str) -> UserDB | None:
+    statement = select(UserDB).where(
+        or_(UserDB.username == username, UserDB.email == email)
+    )
+    return session.exec(statement).first()
 
 
 @router.get("/")
@@ -65,14 +73,7 @@ async def users_detail_by_id(
 
 @router.post("/create/", response_model=PublicUser, status_code=201)
 async def create_user(user: UserCreate, session: Session = Depends(get_session)) -> PublicUser:
-
-    # Check duplicates
-    query = select(UserDB)
-    for field, value in user.model_dump(exclude={'password'}).items():
-        if hasattr(UserDB, field):
-            query = query.where(getattr(UserDB, field) == value)
-
-    existing_user = session.exec(query).first()
+    existing_user = get_existing_user(session, user.username, user.email)
     if existing_user:
         raise HTTPException(status_code=400, detail='User already exists')
 
@@ -95,14 +96,7 @@ async def create_admin(
     user: AdminCreate,
     session: Session = Depends(get_session)
 ) -> PublicUser:
-
-    # Check duplicates
-    query = select(UserDB)
-    for field, value in user.model_dump(exclude={'password'}).items():
-        if hasattr(UserDB, field):
-            query = query.where(getattr(UserDB, field) == value)
-
-    existing_user = session.exec(query).first()
+    existing_user = get_existing_user(session, user.username, user.email)
     if existing_user:
         raise HTTPException(status_code=400, detail='User already exists')
 

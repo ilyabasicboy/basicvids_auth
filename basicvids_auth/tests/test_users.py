@@ -189,6 +189,32 @@ class TestUsersCreate(BaseTestUsers):
         
         assert response.status_code == 400
 
+    def test_create_user_duplicate_username(self):
+        existing_user = self.payload.copy()
+        existing_user["email"] = "existing@example.com"
+        response = client.post(self.method_url, json=existing_user)
+        assert response.status_code == 201
+
+        duplicate_username_payload = self.payload.copy()
+        duplicate_username_payload["email"] = "new@example.com"
+
+        response = client.post(self.method_url, json=duplicate_username_payload)
+
+        assert response.status_code == 400
+
+    def test_create_user_duplicate_email(self):
+        existing_user = self.payload.copy()
+        existing_user["username"] = "existing-user"
+        response = client.post(self.method_url, json=existing_user)
+        assert response.status_code == 201
+
+        duplicate_email_payload = self.payload.copy()
+        duplicate_email_payload["username"] = "new-user"
+
+        response = client.post(self.method_url, json=duplicate_email_payload)
+
+        assert response.status_code == 400
+
 
 class TestUserDelete(BaseTestUsers):
     method_url = "/api/v1/users/delete"
