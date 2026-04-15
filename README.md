@@ -3,7 +3,6 @@
 Authentication universal microservice.
 
 ## Stack
-* Nginx
 * Gunicorn
 * FastAPI
 * SQLModel
@@ -35,10 +34,11 @@ Run the service:
 docker compose up -d
 ```
 
-The service will be available at:
+The service is available through the shared `basicvids_gateway` project:
 
 ```
-http://localhost:8080
+http://localhost:8080/api/v1/auth/
+http://localhost:8080/api/v1/users/
 ```
 
 ## Image Configuration
@@ -47,15 +47,8 @@ Environment variables:
 
 | Variable    | Default              | Description            |
 | ----------- | -------------------- | ---------------------- |
-| PORT        | 8080                 | HTTP port              |
 | DATA_PATH   | ./data               | Data storage directory |
 | CUSTOM_HOST | host.docker.internal | Host gateway           |
-
-Example:
-
-```bash
-PORT=9000 docker compose up -d
-```
 
 ## Project Configuration
 
@@ -76,7 +69,7 @@ DATABASE_URL=postgresql://basicvids_auth_user:basicvidsauthpassword@host.docker.
 Service health endpoint:
 
 ```
-http://localhost:8000/health
+http://localhost:8080/auth/health
 ```
 
 ## Logs
@@ -198,4 +191,3 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
 - **DELETE** `/users/delete/{user_id}`
 - **Requires:** admin authentication
 - **Response:** `{ "message": "User deleted successfully" }`
-
