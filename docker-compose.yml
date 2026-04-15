@@ -1,6 +1,7 @@
 services:
   basicvids_auth:
     image: ilyabasicboy/basicvids-auth:latest
+    build: .
 
     container_name: basicvids_auth
     extra_hosts:

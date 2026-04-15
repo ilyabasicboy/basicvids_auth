@@ -4,7 +4,7 @@ from pathlib import Path
 # Add project root to Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-from basicvids_auth.schemas import get_session
+from basicvids_auth.schemas import create_db_and_tables, get_session
 from basicvids_auth.schemas.users import User as UserDB
 from basicvids_auth.models.users import AdminCreate
 from basicvids_auth.utils.password import hash_password
@@ -15,6 +15,7 @@ from sqlmodel import select
 
 
 def create_admin(username, password, email, first_name=None, last_name=None):
+    create_db_and_tables()
 
     data = {
         'email': email,
