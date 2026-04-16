@@ -5,10 +5,10 @@ from sqlalchemy import or_
 
 from typing import Annotated
 
-from basicvids_auth.utils.password import hash_password
+from basicvids_auth.utils.password import hash_password, verify_password
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
-from basicvids_auth.models.users import User, PublicUser, UserCreate, FilterUser, AdminCreate
+from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, FilterUser, AdminCreate
 from basicvids_auth.decorators.auth import authenticated, admin_authenticated
 
 # Create a router for users
@@ -110,6 +110,51 @@ async def create_admin(
     session.commit()
     session.refresh(db_user)
     return db_user
+
+
+@router.patch("/change/", response_model=PublicUser, status_code=200)
+@authenticated
+async def change_user(
+    request: Request,
+    user: UserChange,
+    session: Session = Depends(get_session),
+) -> PublicUser:
+    authenticated_user = request.state.user
+    db_user = session.get(UserDB, authenticated_user.id)
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_data = user.model_dump()
+    for field, value in user_data.items():
+        setattr(db_user, field, value)
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user
+
+
+@router.patch("/change/password/", response_model=UserPasswordChangeResponse, status_code=200)
+@authenticated
+async def change_user_password(
+    request: Request,
+    data: UserPasswordChange,
+    session: Session = Depends(get_session),
+) -> UserPasswordChangeResponse:
+    authenticated_user = request.state.user
+    db_user = session.get(UserDB, authenticated_user.id)
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(data.old_password, db_user.password):
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
+
+    db_user.password = hash_password(data.new_password)
+    session.add(db_user)
+    session.commit()
+    return UserPasswordChangeResponse(message="Password changed successfully")
 
 
 @router.delete('/delete/', status_code=200)

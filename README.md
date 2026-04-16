@@ -180,6 +180,24 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
   - `last_name` (string, optional)
 - **Response:** `{ id, username, first_name, last_name, email, is_admin }`
 
+#### Change current user
+
+- **PATCH** `/users/change/`
+- **Requires:** authentication
+- **Body:**
+  - `first_name` (string or null)
+  - `last_name` (string or null)
+- **Response:** `{ id, username, first_name, last_name, email, is_admin }`
+
+#### Change current user password
+
+- **PATCH** `/users/change/password/`
+- **Requires:** authentication
+- **Body:**
+  - `old_password` (string, max 72 chars)
+  - `new_password` (string, max 72 chars)
+- **Response:** `{ "message": "Password changed successfully" }`
+
 #### Delete current user
 
 - **DELETE** `/users/delete/`

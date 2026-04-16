@@ -3,6 +3,7 @@ from sqlmodel import Session, select, delete
 from basicvids_auth.schemas.users import User as UserDB 
 from basicvids_auth.tests import engine, client
 from basicvids_auth.utils.auth import create_access_token
+from basicvids_auth.utils.password import hash_password, verify_password
 from basicvids_auth.models.users import PublicUser
 
 from abc import ABC
@@ -324,6 +325,117 @@ class TestUserDetail(BaseTestUsers):
             self.method_url,
             headers={}
         )
+        assert response.status_code == 401
+
+
+class TestUserChange(BaseTestUsers):
+    method_url = "/api/v1/users/change/"
+
+    def setup_method(self):
+        super().setup_method()
+
+        self.test_user = UserDB(**self.payload)
+
+        with Session(engine) as session:
+            session.add(self.test_user)
+            session.commit()
+            session.refresh(self.test_user)
+
+        token = create_access_token(self.test_user.id)
+        self.user_headers = {
+            'Authorization': 'Bearer {}'.format(token)
+        }
+
+    def test_change_user_success(self):
+        response = client.patch(
+            self.method_url,
+            json={
+                "first_name": "Changed",
+                "last_name": "User",
+            },
+            headers=self.user_headers,
+        )
+
+        assert response.status_code == 200
+        response_data = response.json()
+        assert response_data["first_name"] == "Changed"
+        assert response_data["last_name"] == "User"
+        assert response_data["username"] == self.payload["username"]
+        assert response_data["email"] == self.payload["email"]
+
+    def test_change_user_not_authorized(self):
+        response = client.patch(
+            self.method_url,
+            json={
+                "first_name": "Changed",
+                "last_name": "User",
+            },
+            headers={},
+        )
+
+        assert response.status_code == 401
+
+
+class TestUserPasswordChange(BaseTestUsers):
+    method_url = "/api/v1/users/change/password/"
+
+    def setup_method(self):
+        super().setup_method()
+
+        self.test_user = UserDB(**{
+            **self.payload,
+            "password": hash_password(self.payload["password"]),
+        })
+
+        with Session(engine) as session:
+            session.add(self.test_user)
+            session.commit()
+            session.refresh(self.test_user)
+
+        token = create_access_token(self.test_user.id)
+        self.user_headers = {
+            'Authorization': 'Bearer {}'.format(token)
+        }
+
+    def test_change_user_password_success(self):
+        response = client.patch(
+            self.method_url,
+            json={
+                "old_password": self.payload["password"],
+                "new_password": "new-secret",
+            },
+            headers=self.user_headers,
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "Password changed successfully"}
+
+        with Session(engine) as session:
+            user = session.get(UserDB, self.test_user.id)
+            assert verify_password("new-secret", user.password)
+
+    def test_change_user_password_rejects_wrong_old_password(self):
+        response = client.patch(
+            self.method_url,
+            json={
+                "old_password": "wrong-password",
+                "new_password": "new-secret",
+            },
+            headers=self.user_headers,
+        )
+
+        assert response.status_code == 400
+
+    def test_change_user_password_not_authorized(self):
+        response = client.patch(
+            self.method_url,
+            json={
+                "old_password": self.payload["password"],
+                "new_password": "new-secret",
+            },
+            headers={},
+        )
+
         assert response.status_code == 401
 
 

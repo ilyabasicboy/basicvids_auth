@@ -38,6 +38,20 @@ class UserCreate(BaseModel):
     password: constr(max_length=72)
     
 
+class UserChange(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+
+
+class UserPasswordChange(BaseModel):
+    old_password: constr(max_length=72)
+    new_password: constr(max_length=72)
+
+
+class UserPasswordChangeResponse(BaseModel):
+    message: str
+
+
 class AdminCreate(BaseModel):
     username: str
     first_name: str | None = None
