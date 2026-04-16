@@ -1,6 +1,7 @@
 from sqlmodel import Session, select, delete
 
 from basicvids_auth.schemas.users import User as UserDB 
+from basicvids_auth.schemas.users import EmailCode as EmailCodeDB
 from basicvids_auth.tests import engine, client
 from basicvids_auth.utils.auth import create_access_token
 from basicvids_auth.utils.password import hash_password, verify_password
@@ -29,10 +30,12 @@ class BaseTestUsers(ABC):
             "password": "admin",
             "first_name": "Admin",
             "last_name": "Admin",
-            "is_admin": True
+            "is_admin": True,
+            "email_confirmed": True,
         }
 
         with Session(engine) as session:
+            session.exec(delete(EmailCodeDB))
             session.exec(delete(UserDB))
             session.commit()
 
@@ -167,10 +170,47 @@ class TestUsersCreate(BaseTestUsers):
         self.payload.pop('password')
         for key, value in self.payload.items():
             assert value == response_data[key]
+        assert response_data["email_confirmed"] is False
 
         with Session(engine) as session:
             user = session.exec(select(UserDB).where(UserDB.email == "test@example.com")).first()
             assert user is not None
+            assert user.email_confirmed is False
+            email_code = session.exec(select(EmailCodeDB).where(EmailCodeDB.email == "test@example.com")).first()
+            assert email_code is not None
+
+    def test_confirm_email_success(self):
+        response = client.post(self.method_url, json=self.payload)
+        assert response.status_code == 201
+
+        with Session(engine) as session:
+            email_code = session.exec(select(EmailCodeDB).where(EmailCodeDB.email == "test@example.com")).first()
+            code = email_code.code
+
+        response = client.post(
+            "/api/v1/users/confirm/email/",
+            json={
+                "email": "test@example.com",
+                "code": code,
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json()["email_confirmed"] is True
+
+    def test_confirm_email_rejects_wrong_code(self):
+        response = client.post(self.method_url, json=self.payload)
+        assert response.status_code == 201
+
+        response = client.post(
+            "/api/v1/users/confirm/email/",
+            json={
+                "email": "test@example.com",
+                "code": "000000",
+            },
+        )
+
+        assert response.status_code == 400
 
     def test_create_user_invalid_data(self):
         

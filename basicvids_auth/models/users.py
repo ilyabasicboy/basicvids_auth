@@ -19,6 +19,7 @@ class PublicUser(BaseModel):
     last_name: Optional[str] = None
     email: EmailStr
     is_admin: bool = False
+    email_confirmed: bool = False
 
 
 class FilterUser(BaseModel):
@@ -52,6 +53,15 @@ class UserPasswordChangeResponse(BaseModel):
     message: str
 
 
+class Email(BaseModel):
+    email: EmailStr
+
+
+class EmailCode(BaseModel):
+    email: EmailStr
+    code: str
+
+
 class AdminCreate(BaseModel):
     username: str
     first_name: str | None = None
@@ -59,3 +69,4 @@ class AdminCreate(BaseModel):
     email: EmailStr
     password: constr(max_length=72)
     is_admin: bool = True
+    email_confirmed: bool = True

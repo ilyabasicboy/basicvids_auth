@@ -4,12 +4,16 @@ from sqlmodel import Session, select
 from sqlalchemy import or_
 
 from typing import Annotated
+from datetime import datetime, timedelta, timezone
 
 from basicvids_auth.utils.password import hash_password, verify_password
+from basicvids_auth.utils.email import generate_email_code, send_confirmation_email
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
-from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, FilterUser, AdminCreate
+from basicvids_auth.schemas.users import EmailCode as EmailCodeDB
+from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, EmailCode, FilterUser, AdminCreate
 from basicvids_auth.decorators.auth import authenticated, admin_authenticated
+from basicvids_auth.settings import settings
 
 # Create a router for users
 router = APIRouter(tags=["Users"], prefix='/users')
@@ -20,6 +24,23 @@ def get_existing_user(session: Session, username: str, email: str) -> UserDB | N
         or_(UserDB.username == username, UserDB.email == email)
     )
     return session.exec(statement).first()
+
+
+def create_email_code(session: Session, email: str) -> EmailCodeDB:
+    for old_code in session.exec(select(EmailCodeDB).where(EmailCodeDB.email == email)).all():
+        session.delete(old_code)
+
+    code = generate_email_code()
+    email_code = EmailCodeDB(
+        email=email,
+        code=code,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_CODE_EXPIRE_MINUTES),
+    )
+    session.add(email_code)
+    session.commit()
+    session.refresh(email_code)
+    send_confirmation_email(email, code)
+    return email_code
 
 
 @router.get("/")
@@ -86,7 +107,35 @@ async def create_user(user: UserCreate, session: Session = Depends(get_session))
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
+    create_email_code(session, db_user.email)
     return db_user
+
+
+@router.post("/confirm/email/", response_model=PublicUser, status_code=200)
+async def confirm_email(data: EmailCode, session: Session = Depends(get_session)) -> PublicUser:
+    user = session.exec(select(UserDB).where(UserDB.email == data.email)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.email_confirmed:
+        return user
+
+    email_code = session.exec(
+        select(EmailCodeDB)
+        .where(EmailCodeDB.email == data.email)
+        .where(EmailCodeDB.code == data.code)
+    ).first()
+    if not email_code:
+        raise HTTPException(status_code=400, detail="Invalid email confirmation code")
+    if email_code.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Email confirmation code expired")
+
+    user.email_confirmed = True
+    session.add(user)
+    for old_code in session.exec(select(EmailCodeDB).where(EmailCodeDB.email == data.email)).all():
+        session.delete(old_code)
+    session.commit()
+    session.refresh(user)
+    return user
 
 
 @router.post("/create/admin/", response_model=PublicUser, status_code=201)

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException
 from jose import jwt, JWTError
 from sqlmodel import Session, select
 
@@ -57,6 +58,9 @@ def authenticate(session: Session, identifier: str, password: str):
 
     if not user or not verify_password(password, user.password):
         return
+
+    if not user.email_confirmed:
+        raise HTTPException(status_code=403, detail="Email is not confirmed")
     
     iat = datetime.now(timezone.utc)
     exp = iat + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)

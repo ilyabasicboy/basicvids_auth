@@ -63,6 +63,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES=INT # (default=15)
 REFRESH_TOKEN_EXPIRE_DAYS=INT # (default=7)
 
 DATABASE_URL=postgresql://basicvids_auth_user:basicvidsauthpassword@host.docker.internal:5432/basicvids_auth # (default=sqlite:///./data/database.db)
+DEBUG=True # prints confirmation emails to console instead of sending real mail
+EMAIL_CODE_EXPIRE_MINUTES=10
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USERNAME=username
+SMTP_PASSWORD=password
+EMAIL_FROM=noreply@example.com
 
 ## Healthcheck
 
@@ -92,6 +99,13 @@ docker compose down
 docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.py username password email --first_name first_name --last_name last_name
 ```
 
+## Cleanup commands
+
+```bash
+docker compose exec basicvids_auth python3 basicvids_auth/commands/delete_expired_email_codes.py
+docker compose exec basicvids_auth python3 basicvids_auth/commands/delete_unconfirmed_users.py
+```
+
 ## API Documentation
 
 ### Health Check
@@ -111,6 +125,7 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
   - `access_token` (string)
   - `refresh_token` (string)
   - `token_type` ("bearer")
+- **Note:** users with unconfirmed email receive `403` with `Email is not confirmed`
 
 #### Refresh
 
@@ -149,12 +164,12 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
 
 - **GET** `/users/detail/`
 - **Requires:** authentication
-- **Response:** `{ id, username, first_name, last_name, email, is_admin }`
+- **Response:** `{ id, username, first_name, last_name, email, is_admin, email_confirmed }`
 
 #### Get user by ID (admin only)
 
 - **GET** `/users/detail/{user_id}`
-- **Response:** `{ id, username, first_name, last_name, email, is_admin }`
+- **Response:** `{ id, username, first_name, last_name, email, is_admin, email_confirmed }`
 
 #### Create user
 
@@ -165,7 +180,15 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
   - `password` (string, max 72 chars)
   - `first_name` (string, optional)
   - `last_name` (string, optional)
-- **Response:** `{ id, username, first_name, last_name, email, is_admin }`
+- **Response:** `{ id, username, first_name, last_name, email, is_admin, email_confirmed }`
+
+#### Confirm user email
+
+- **POST** `/users/confirm/email/`
+- **Body:**
+  - `email` (string)
+  - `code` (string)
+- **Response:** `{ id, username, first_name, last_name, email, is_admin, email_confirmed }`
 
 #### Create admin (admin only)
 
@@ -178,7 +201,7 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
   - `is_admin` (bool, defaults to true)
   - `first_name` (string, optional)
   - `last_name` (string, optional)
-- **Response:** `{ id, username, first_name, last_name, email, is_admin }`
+- **Response:** `{ id, username, first_name, last_name, email, is_admin, email_confirmed }`
 
 #### Change current user
 
@@ -187,7 +210,7 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
 - **Body:**
   - `first_name` (string or null)
   - `last_name` (string or null)
-- **Response:** `{ id, username, first_name, last_name, email, is_admin }`
+- **Response:** `{ id, username, first_name, last_name, email, is_admin, email_confirmed }`
 
 #### Change current user password
 

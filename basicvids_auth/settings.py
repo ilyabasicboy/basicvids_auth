@@ -8,6 +8,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     DATABASE_URL: str = "sqlite:///./data/database.db"
+    DEBUG: bool = False
+    EMAIL_CODE_EXPIRE_MINUTES: int = 10
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    EMAIL_FROM: str = "noreply@basicvids.local"
 
     model_config = SettingsConfigDict(
         env_file="./data/.env",

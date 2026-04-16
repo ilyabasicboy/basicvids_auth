@@ -25,6 +25,7 @@ class BaseTestAuth(ABC):
             "password": hash_password("secret123"),
             "first_name": "Test",
             "last_name": "Test",
+            "email_confirmed": True,
         }
 
         with Session(engine) as session:
@@ -86,6 +87,20 @@ class TestAuthLogin(BaseTestAuth):
 
         response = client.post(self.method_url, json=data)
         assert response.status_code == 401
+
+    def test_login_email_not_confirmed(self):
+        with Session(engine) as session:
+            user = session.get(UserDB, self.test_user.id)
+            user.email_confirmed = False
+            session.add(user)
+            session.commit()
+
+        response = client.post(self.method_url, json={
+            "password": "secret123",
+            "identifier": "test",
+        })
+
+        assert response.status_code == 403
 
 
 class TestAuthRefresh(BaseTestAuth):
