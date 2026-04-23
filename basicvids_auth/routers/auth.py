@@ -1,9 +1,10 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.auth import RefreshToken
 from basicvids_auth.models.auth import LoginRequest, TokenResponse, RefreshRequest
+from basicvids_auth.rate_limit import rate_limit_ip
 from basicvids_auth.utils.auth import authenticate, decode_token, create_access_token
 
 from datetime import datetime, timezone
@@ -13,7 +14,12 @@ from datetime import datetime, timezone
 router = APIRouter(tags=["Auth"], prefix='/auth')
 
 
-@router.post("/login/", response_model=TokenResponse, status_code=201)
+@router.post(
+    "/login/",
+    response_model=TokenResponse,
+    status_code=201,
+    dependencies=[Depends(rate_limit_ip("login", 5, 60))],
+)
 async def login(login: LoginRequest, session: Session = Depends(get_session)) -> TokenResponse:
     auth_data = authenticate(session, login.identifier, login.password)
 
@@ -23,7 +29,11 @@ async def login(login: LoginRequest, session: Session = Depends(get_session)) ->
     return auth_data
 
 
-@router.post("/refresh/", response_model=TokenResponse)
+@router.post(
+    "/refresh/",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit_ip("refresh", 30, 60))],
+)
 def refresh(data: RefreshRequest, session: Session = Depends(get_session)):
     payload = decode_token(data.refresh_token)
 

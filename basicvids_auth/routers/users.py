@@ -12,6 +12,7 @@ from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
 from basicvids_auth.schemas.users import EmailCode as EmailCodeDB
 from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, EmailCode, FilterUser, AdminCreate
+from basicvids_auth.rate_limit import rate_limit_ip
 from basicvids_auth.decorators.auth import authenticated, admin_authenticated
 from basicvids_auth.settings import settings
 
@@ -92,7 +93,12 @@ async def users_detail_by_id(
     return user
 
 
-@router.post("/create/", response_model=PublicUser, status_code=201)
+@router.post(
+    "/create/",
+    response_model=PublicUser,
+    status_code=201,
+    dependencies=[Depends(rate_limit_ip("create_user", 3, 3600))],
+)
 async def create_user(user: UserCreate, session: Session = Depends(get_session)) -> PublicUser:
     existing_user = get_existing_user(session, user.username, user.email)
     if existing_user:
@@ -111,7 +117,12 @@ async def create_user(user: UserCreate, session: Session = Depends(get_session))
     return db_user
 
 
-@router.post("/confirm/email/", response_model=PublicUser, status_code=200)
+@router.post(
+    "/confirm/email/",
+    response_model=PublicUser,
+    status_code=200,
+    dependencies=[Depends(rate_limit_ip("confirm_email", 10, 600))],
+)
 async def confirm_email(data: EmailCode, session: Session = Depends(get_session)) -> PublicUser:
     user = session.exec(select(UserDB).where(UserDB.email == data.email)).first()
     if not user:

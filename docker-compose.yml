@@ -11,6 +11,7 @@ services:
     environment:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
+      REDIS_URL: redis://basicvids_redis:6379/2
     entrypoint: ["/basicvids_auth/entrypoint.sh"]
     expose:
       - "8000"

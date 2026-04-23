@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     DATABASE_URL: str = "sqlite:///./data/database.db"
+    REDIS_URL: str = "redis://localhost:6379/2"
     DEBUG: bool = False
     EMAIL_CODE_EXPIRE_MINUTES: int = 10
     SMTP_HOST: str | None = None
