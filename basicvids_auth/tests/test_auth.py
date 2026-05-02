@@ -2,7 +2,7 @@ from sqlmodel import Session, select, delete
 
 from basicvids_auth.schemas.users import User as UserDB 
 from basicvids_auth.tests import engine, client
-from basicvids_auth.utils.auth import create_access_token, create_refresh_token
+from basicvids_auth.utils.auth import create_access_token, create_refresh_token, decode_token
 from basicvids_auth.utils.password import hash_password
 from basicvids_auth.models.auth import TokenResponse
 from basicvids_auth.schemas.auth import RefreshToken
@@ -135,6 +135,36 @@ class TestAuthRefresh(BaseTestAuth):
         assert response.status_code == 200
 
         assert TokenResponse(**response_data)
+        assert response_data["refresh_token"] != self.refresh_token
+
+        with Session(engine) as session:
+            old_payload = decode_token(self.refresh_token)
+            old_token = session.get(RefreshToken, old_payload["jti"])
+            new_payload = decode_token(response_data["refresh_token"])
+            new_token = session.get(RefreshToken, new_payload["jti"])
+
+            assert old_token is not None
+            assert old_token.revoked_at is not None
+            assert new_token is not None
+            assert new_token.revoked_at is None
+
+    def test_refresh_revokes_previous_token(self):
+        response = client.post(self.method_url, json={
+            "refresh_token": self.refresh_token
+        })
+
+        assert response.status_code == 200
+        rotated_refresh_token = response.json()["refresh_token"]
+
+        second_response = client.post(self.method_url, json={
+            "refresh_token": self.refresh_token
+        })
+        assert second_response.status_code == 401
+
+        rotated_response = client.post(self.method_url, json={
+            "refresh_token": rotated_refresh_token
+        })
+        assert rotated_response.status_code == 200
 
     def test_refresh_incorrect_token_type(self):
 

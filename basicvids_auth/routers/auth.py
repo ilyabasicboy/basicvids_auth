@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.auth import RefreshToken
 from basicvids_auth.models.auth import LoginRequest, TokenResponse, RefreshRequest
 from basicvids_auth.rate_limit import rate_limit_ip
-from basicvids_auth.utils.auth import authenticate, decode_token, create_access_token
+from basicvids_auth.utils.auth import authenticate, decode_token, issue_token_pair
 
 from datetime import datetime, timezone
 
@@ -34,7 +34,7 @@ async def login(login: LoginRequest, session: Session = Depends(get_session)) ->
     response_model=TokenResponse,
     dependencies=[Depends(rate_limit_ip("refresh", 30, 60))],
 )
-def refresh(data: RefreshRequest, session: Session = Depends(get_session)):
+async def refresh(data: RefreshRequest, session: Session = Depends(get_session)):
     payload = decode_token(data.refresh_token)
 
     if not payload or payload.get("type") != "refresh":
@@ -42,20 +42,26 @@ def refresh(data: RefreshRequest, session: Session = Depends(get_session)):
 
     token = session.get(RefreshToken, payload["jti"])
 
-    if not token or token.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if (
+        not token
+        or token.revoked_at is not None
+        or token.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc)
+    ):
         raise HTTPException(status_code=401, detail="Refresh token expired")
 
-    access_token = create_access_token(token.user_id)
+    token.revoked_at = datetime.now(timezone.utc)
+    session.add(token)
+    session.commit()
 
+    token_pair = issue_token_pair(session, token.user_id)
     return {
-        "access_token": access_token,
-        "refresh_token": data.refresh_token,
+        **token_pair,
         "token_type": "bearer",
     }
 
 
 @router.post("/logout/")
-def logout(data: RefreshRequest, session: Session = Depends(get_session)):
+async def logout(data: RefreshRequest, session: Session = Depends(get_session)):
     payload = decode_token(data.refresh_token)
 
     if not payload or payload.get("type") != "refresh":
@@ -63,7 +69,9 @@ def logout(data: RefreshRequest, session: Session = Depends(get_session)):
 
     if payload:
         token = session.get(RefreshToken, payload["jti"])
-        session.delete(token)
-        session.commit()
+        if token and token.revoked_at is None:
+            token.revoked_at = datetime.now(timezone.utc)
+            session.add(token)
+            session.commit()
 
     return {"detail": "Logged out"}

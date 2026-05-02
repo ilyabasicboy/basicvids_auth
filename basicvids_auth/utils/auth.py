@@ -37,6 +37,26 @@ def create_refresh_token(user_id: str, token_id: str):
     )
 
 
+def issue_token_pair(session: Session, user_id: int):
+    issued_at = datetime.now(timezone.utc)
+    expires_at = issued_at + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    refresh_token = RefreshToken(
+        user_id=user_id,
+        expires_at=expires_at,
+        created_at=issued_at,
+    )
+
+    session.add(refresh_token)
+    session.commit()
+    session.refresh(refresh_token)
+
+    return {
+        "access_token": create_access_token(user_id=user_id),
+        "refresh_token": create_refresh_token(user_id=user_id, token_id=refresh_token.id),
+    }
+
+
 def decode_token(token: str):
     try:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -62,20 +82,4 @@ def authenticate(session: Session, identifier: str, password: str):
     if not user.email_confirmed:
         raise HTTPException(status_code=403, detail="Email is not confirmed")
     
-    iat = datetime.now(timezone.utc)
-    exp = iat + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-
-    refresh_token = RefreshToken(
-        user_id=user.id,
-        expires_at=exp,
-        created_at=iat
-    )
-    
-    session.add(refresh_token)
-    session.commit()
-    session.refresh(refresh_token)
-
-    return {
-        'access_token': create_access_token(user_id=user.id),
-        'refresh_token': create_refresh_token(user_id=user.id, token_id=refresh_token.id)
-    }
+    return issue_token_pair(session, user.id)
