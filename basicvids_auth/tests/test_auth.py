@@ -57,6 +57,8 @@ class TestAuthLogin(BaseTestAuth):
 
         response_data = response.json()
         assert TokenResponse(**response_data)
+        assert response_data["refresh_token"] is None
+        assert settings.REFRESH_TOKEN_COOKIE_NAME in response.headers.get("set-cookie", "")
 
     def test_login_email_success(self):
         data = {
@@ -69,6 +71,8 @@ class TestAuthLogin(BaseTestAuth):
 
         response_data = response.json()
         assert TokenResponse(**response_data)
+        assert response_data["refresh_token"] is None
+        assert settings.REFRESH_TOKEN_COOKIE_NAME in response.headers.get("set-cookie", "")
 
     def test_login_wrong_data(self):
         data = {
@@ -135,12 +139,17 @@ class TestAuthRefresh(BaseTestAuth):
         assert response.status_code == 200
 
         assert TokenResponse(**response_data)
-        assert response_data["refresh_token"] != self.refresh_token
+        assert response_data["refresh_token"] is None
+        set_cookie_header = response.headers.get("set-cookie", "")
+        assert settings.REFRESH_TOKEN_COOKIE_NAME in set_cookie_header
+        rotated_refresh_token = response.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
+        assert rotated_refresh_token
+        assert rotated_refresh_token != self.refresh_token
 
         with Session(engine) as session:
             old_payload = decode_token(self.refresh_token)
             old_token = session.get(RefreshToken, old_payload["jti"])
-            new_payload = decode_token(response_data["refresh_token"])
+            new_payload = decode_token(rotated_refresh_token)
             new_token = session.get(RefreshToken, new_payload["jti"])
 
             assert old_token is not None
@@ -154,7 +163,7 @@ class TestAuthRefresh(BaseTestAuth):
         })
 
         assert response.status_code == 200
-        rotated_refresh_token = response.json()["refresh_token"]
+        rotated_refresh_token = response.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
 
         second_response = client.post(self.method_url, json={
             "refresh_token": self.refresh_token
@@ -180,7 +189,7 @@ class TestAuthRefresh(BaseTestAuth):
         data = {}
         response = client.post(self.method_url, json=data)
         
-        assert response.status_code == 422
+        assert response.status_code == 401
 
     def test_refresh_incorrect_token(self):
         data = {
@@ -220,6 +229,7 @@ class TestAuthLogout(BaseTestAuth):
         response = client.post(self.method_url, json=data)
         
         assert response.status_code == 200
+        assert settings.REFRESH_TOKEN_COOKIE_NAME in response.headers.get("set-cookie", "")
 
     def test_refresh_incorrect_token_type(self):
 
@@ -235,7 +245,7 @@ class TestAuthLogout(BaseTestAuth):
         data = {}
         response = client.post(self.method_url, json=data)
         
-        assert response.status_code == 422
+        assert response.status_code == 401
 
     def test_refresh_incorrect_token(self):
         data = {

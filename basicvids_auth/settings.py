@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
     EMAIL_FROM: str = "noreply@basicvids.local"
+    REFRESH_TOKEN_COOKIE_NAME: str = "basicvids_refresh_token"
+    REFRESH_TOKEN_COOKIE_PATH: str = "/api/v1/auth"
+    REFRESH_TOKEN_COOKIE_SECURE: bool = False
+    REFRESH_TOKEN_COOKIE_SAMESITE: str = "lax"
 
     model_config = SettingsConfigDict(
         env_file="./data/.env",
