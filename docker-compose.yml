@@ -12,6 +12,8 @@ services:
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
       REDIS_URL: redis://basicvids_redis:6379/2
+      REFRESH_TOKEN_REVOKED_RETENTION_DAYS: ${REFRESH_TOKEN_REVOKED_RETENTION_DAYS:-30}
+      REFRESH_TOKEN_CLEANUP_CRON: ${REFRESH_TOKEN_CLEANUP_CRON:-17 * * * *}
     entrypoint: ["/basicvids_auth/entrypoint.sh"]
     expose:
       - "8000"

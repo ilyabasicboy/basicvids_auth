@@ -18,6 +18,7 @@ ENV PYTHONUNBUFFERED=1
 COPY --from=builder /install/deps /usr/local
 
 RUN apt-get update && apt-get install -y \
+    cron \
     curl \
     less \
     nano \

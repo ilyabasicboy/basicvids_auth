@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_COOKIE_PATH: str = "/api/v1/auth"
     REFRESH_TOKEN_COOKIE_SECURE: bool = False
     REFRESH_TOKEN_COOKIE_SAMESITE: str = "lax"
+    REFRESH_TOKEN_REVOKED_RETENTION_DAYS: int = 30
+    REFRESH_TOKEN_CLEANUP_CRON: str = "0 8 * * *"
 
     model_config = SettingsConfigDict(
         env_file="./data/.env",
