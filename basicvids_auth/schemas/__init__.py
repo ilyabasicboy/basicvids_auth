@@ -11,6 +11,8 @@ engine = create_engine(DATABASE_URL)
 
 
 def create_db_and_tables():
+    settings.DATA_PATH.mkdir(parents=True, exist_ok=True)
+    settings.avatar_storage_path.mkdir(parents=True, exist_ok=True)
     SQLModel.metadata.create_all(engine)
     migrate_user_email_confirmation()
 

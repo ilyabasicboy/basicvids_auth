@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
@@ -7,7 +9,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    STORAGE_BACKEND: str = "disk"
+    DATA_PATH: Path = Path("./data")
     DATABASE_URL: str = "sqlite:///./data/database.db"
+    AVATAR_STORAGE_DIR: str = "avatars"
+    MAX_AVATAR_SIZE_BYTES: int = Field(default=512 * 1024, gt=0)
     REDIS_URL: str = "redis://localhost:6379/2"
     DEBUG: bool = False
     EMAIL_CODE_EXPIRE_MINUTES: int = 10
@@ -28,6 +34,10 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=True,
     )
+
+    @property
+    def avatar_storage_path(self) -> Path:
+        return self.DATA_PATH / self.AVATAR_STORAGE_DIR
 
 try:
     settings = Settings()

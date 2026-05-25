@@ -48,6 +48,8 @@ Environment variables:
 | Variable    | Default              | Description            |
 | ----------- | -------------------- | ---------------------- |
 | DATA_PATH   | ./data               | Data storage directory |
+| AVATAR_STORAGE_DIR | avatars        | Directory inside DATA_PATH for user avatar files |
+| MAX_AVATAR_SIZE_BYTES | 524288      | Maximum user avatar size |
 | CUSTOM_HOST | host.docker.internal | Host gateway           |
 
 ## Project Configuration
@@ -104,6 +106,20 @@ docker compose exec basicvids_auth python3 basicvids_auth/commands/create_admin.
 ```bash
 docker compose exec basicvids_auth python3 basicvids_auth/commands/delete_expired_email_codes.py
 docker compose exec basicvids_auth python3 basicvids_auth/commands/delete_unconfirmed_users.py
+```
+
+User avatar API is owned by this service:
+
+- `POST /api/v1/avatars/users/{user_id}/registration/` uploads the initial avatar after registration.
+- `PUT /api/v1/avatars/me/` replaces the authenticated user's avatar.
+- `GET /api/v1/avatars/users/{user_id}/image/` returns the image or the default placeholder.
+- `DELETE /api/v1/avatars/me/` deletes the authenticated user's avatar.
+
+To import avatar records and files previously owned by `basicvids_storage`, run before removing old storage data:
+
+```bash
+venv/bin/python -m basicvids_auth.commands.migrate_avatars_from_storage \
+  ../basicvids_storage/data/database.db ../basicvids_storage/data/videos
 ```
 
 ## API Documentation

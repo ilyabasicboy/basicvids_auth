@@ -32,6 +32,24 @@ class User(SQLModel, table=True):
     )
 
 
+class Avatar(SQLModel, table=True):
+    user_id: int = Field(foreign_key="user.id", primary_key=True)
+    storage_backend: str = Field(default="disk", max_length=50)
+    storage_key: str = Field(unique=True, max_length=500)
+    content_type: str = Field(max_length=100)
+    size_bytes: int = Field(ge=0)
+    created_at: datetime = Field(
+        sa_type=DateTime(timezone=True),
+        default_factory=utc_now,
+        nullable=False,
+    )
+    updated_at: datetime = Field(
+        sa_type=DateTime(timezone=True),
+        default_factory=utc_now,
+        nullable=False,
+    )
+
+
 class EmailCode(SQLModel, table=True):
     id: str = Field(
         default_factory=lambda: str(uuid.uuid4()),

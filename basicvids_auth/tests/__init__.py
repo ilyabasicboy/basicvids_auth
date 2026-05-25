@@ -18,7 +18,7 @@ engine = create_engine(
 
 SQLModel.metadata.create_all(engine)
 
-def override_get_session():
+async def override_get_session():
     with Session(engine) as session:
         yield session
 

@@ -5,6 +5,7 @@
 *.zip
 *.db
 *.env
+/data/
 /.settings
 /.installed.cfg
 /.idea/*

@@ -11,10 +11,12 @@ from basicvids_auth.utils.email import generate_email_code, send_confirmation_em
 from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
 from basicvids_auth.schemas.users import EmailCode as EmailCodeDB
+from basicvids_auth.schemas.users import Avatar as AvatarDB
 from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, EmailCode, FilterUser, AdminCreate
 from basicvids_auth.rate_limit import rate_limit_ip
 from basicvids_auth.decorators.auth import authenticated, admin_authenticated
 from basicvids_auth.settings import settings
+from basicvids_auth.storage import build_storage
 
 # Create a router for users
 router = APIRouter(tags=["Users"], prefix='/users')
@@ -42,6 +44,14 @@ def create_email_code(session: Session, email: str) -> EmailCodeDB:
     session.refresh(email_code)
     send_confirmation_email(email, code)
     return email_code
+
+
+def delete_user_avatar(session: Session, user_id: int) -> None:
+    avatar = session.get(AvatarDB, user_id)
+    if not avatar:
+        return
+    build_storage().delete(avatar.storage_key)
+    session.delete(avatar)
 
 
 @router.get("/")
@@ -228,7 +238,8 @@ async def delete_user(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
+    delete_user_avatar(session, user.id)
     session.delete(user)
     session.commit()
 
@@ -246,7 +257,8 @@ async def delete_user_by_id(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
+    delete_user_avatar(session, user.id)
     session.delete(user)
     session.commit()
 

@@ -1,0 +1,12 @@
+from basicvids_auth.settings import settings
+from basicvids_auth.storage.disk import DiskStorage
+
+
+def build_storage() -> DiskStorage:
+    if settings.STORAGE_BACKEND != "disk":
+        raise ValueError(f"Unsupported storage backend: {settings.STORAGE_BACKEND}")
+    return DiskStorage(settings.avatar_storage_path)
+
+
+async def get_storage() -> DiskStorage:
+    return build_storage()
