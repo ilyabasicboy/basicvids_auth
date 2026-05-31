@@ -12,7 +12,7 @@ from basicvids_auth.schemas import get_session
 from basicvids_auth.schemas.users import User as UserDB
 from basicvids_auth.schemas.users import EmailCode as EmailCodeDB
 from basicvids_auth.schemas.users import Avatar as AvatarDB
-from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, EmailCode, FilterUser, AdminCreate
+from basicvids_auth.models.users import User, PublicUser, UserChange, UserCreate, UserPasswordChange, UserPasswordChangeResponse, EmailCode, AdminCreate
 from basicvids_auth.rate_limit import rate_limit_ip
 from basicvids_auth.decorators.auth import authenticated, admin_authenticated
 from basicvids_auth.settings import settings
@@ -58,7 +58,12 @@ def delete_user_avatar(session: Session, user_id: int) -> None:
 @admin_authenticated
 async def users(
     request: Request,
-    filter: Annotated[FilterUser, Depends(FilterUser)],
+    id: int | None = Query(default=None),
+    username: str | None = Query(default=None),
+    first_name: str | None = Query(default=None),
+    last_name: str | None = Query(default=None),
+    email: str | None = Query(default=None),
+    is_admin: bool | None = Query(default=None),
     offset:int = 0,
     limit: int = Query(default=10, le=100),
     session: Session = Depends(get_session),
@@ -66,7 +71,15 @@ async def users(
     
     query = select(UserDB)
     # Dynamically apply filters for non-None values
-    filter_dict = filter.model_dump(exclude_none=True)
+    filter_dict = {
+        "id": id,
+        "username": username,
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "is_admin": is_admin,
+    }
+    filter_dict = {key: value for key, value in filter_dict.items() if value is not None}
     for field, value in filter_dict.items():
         if hasattr(UserDB, field):
             query = query.where(getattr(UserDB, field) == value)
