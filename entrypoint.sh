@@ -28,8 +28,8 @@ chmod 0644 "$CRON_FILE"
 crontab "$CRON_FILE"
 service cron start
 
-# Calculate workers automatically
-WORKERS=$(python -c "import multiprocessing; print(multiprocessing.cpu_count() * 2 + 1)")
+# Keep a single worker by default to avoid multiplying idle memory usage across services.
+WORKERS="${WORKERS:-1}"
 
 echo "Starting server with $WORKERS workers"
 
